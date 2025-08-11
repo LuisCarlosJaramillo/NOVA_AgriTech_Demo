@@ -1,18 +1,20 @@
 import gradio as gr
-import torch
 from PIL import Image
+import torch
 from transformers import AutoProcessor, AutoModelForImageClassification
 
-# Cargar el modelo y el procesador
-MODEL_NAME = "LuisCarlosJaramillo/NOVA_AgriTech_Demo_Model"  # Cambia si el repo del modelo es otro
-processor = AutoProcessor.from_pretrained(MODEL_NAME)
-model = AutoModelForImageClassification.from_pretrained(MODEL_NAME)
+# Ruta local al modelo en tu repo
+LOCAL_MODEL_PATH = "./model"
+
+# Carga del procesador y modelo desde carpeta local
+processor = AutoProcessor.from_pretrained(LOCAL_MODEL_PATH)
+model = AutoModelForImageClassification.from_pretrained(LOCAL_MODEL_PATH)
 
 def predict(image):
-    # Preprocesar la imagen
+    # Preprocesar imagen
     inputs = processor(images=image, return_tensors="pt")
 
-    # Realizar predicción
+    # Inferencia
     with torch.no_grad():
         outputs = model(**inputs)
         logits = outputs.logits
@@ -27,7 +29,7 @@ demo = gr.Interface(
     inputs=gr.Image(type="pil"),
     outputs="text",
     title="🌱 NOVA AgriTech - Clasificador de Cultivos",
-    description="Sube una imagen de un cultivo para detectar su estado o tipo. Entrenado con datos agrícolas."
+    description="Sube una imagen de un cultivo para detectar su estado o tipo."
 )
 
 if __name__ == "__main__":
