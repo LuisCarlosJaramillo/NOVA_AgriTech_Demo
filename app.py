@@ -1,15 +1,34 @@
 import gradio as gr
+import torch
+from PIL import Image
+from transformers import AutoProcessor, AutoModelForImageClassification
 
-def procesar_texto(entrada):
-    salida = f"Procesaste: {entrada}"
-    return salida
+# Cargar el modelo y el procesador
+MODEL_NAME = "LuisCarlosJaramillo/NOVA_AgriTech_Demo_Model"  # Cambia si el repo del modelo es otro
+processor = AutoProcessor.from_pretrained(MODEL_NAME)
+model = AutoModelForImageClassification.from_pretrained(MODEL_NAME)
 
-with gr.Blocks() as demo:
-    gr.Markdown("# 🚀 Mi Demo IA")
-    entrada = gr.Textbox(label="Escribe algo")
-    salida = gr.Textbox(label="Resultado")
-    btn = gr.Button("Procesar")
-    btn.click(fn=procesar_texto, inputs=entrada, outputs=salida)
+def predict(image):
+    # Preprocesar la imagen
+    inputs = processor(images=image, return_tensors="pt")
+
+    # Realizar predicción
+    with torch.no_grad():
+        outputs = model(**inputs)
+        logits = outputs.logits
+        predicted_class_idx = logits.argmax(-1).item()
+
+    label = model.config.id2label[predicted_class_idx]
+    return f"Predicción: {label}"
+
+# Interfaz Gradio
+demo = gr.Interface(
+    fn=predict,
+    inputs=gr.Image(type="pil"),
+    outputs="text",
+    title="🌱 NOVA AgriTech - Clasificador de Cultivos",
+    description="Sube una imagen de un cultivo para detectar su estado o tipo. Entrenado con datos agrícolas."
+)
 
 if __name__ == "__main__":
     demo.launch()
